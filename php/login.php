@@ -1,46 +1,33 @@
 <?php
+require_once 'conexion.php';
 session_start();
 
-// Incluir archivo de configuración
-require_once 'config.php';
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $carnet = trim($_POST['carnet'] ?? '');
+    $contrasena = $_POST['contrasena'] ?? '';
 
-// Obtener datos del formulario
-$nombre = $_POST['nombre'];
-$contrasena = $_POST['contrasena'];
-
-// Buscar el estudiante
-$sql = "SELECT * FROM estudiantes WHERE nombre = ?";
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("s", $nombre);
-$stmt->execute();
-$resultado = $stmt->get_result();
-
-if ($resultado->num_rows > 0) {
-    $estudiante = $resultado->fetch_assoc();
-    
-    if (password_verify($contrasena, $estudiante['contrasena'])) {
-        // Guardar datos de sesión
-        $_SESSION['estudiante_id'] = $estudiante['id'];
-        $_SESSION['nombre'] = $estudiante['nombre'];
-        $_SESSION['apellido'] = $estudiante['apellido'];
-        $_SESSION['matricula'] = $estudiante['matricula'];
-        
-        // Redireccionar a la página de inicio
-        header("Location: ../html/Inicio.html");
-        exit;
+    if ($carnet && $contrasena) {
+        $sql = "SELECT * FROM estudiantes WHERE carnet = ? LIMIT 1";
+        $stmt = $conn->prepare($sql);
+        $stmt->execute([$carnet]);
+        $usuario = $stmt->fetch();
+        if ($usuario && password_verify($contrasena, $usuario['contrasena'])) {
+            $_SESSION['id'] = $usuario['id'];
+            $_SESSION['nombres'] = $usuario['nombres'];
+            $_SESSION['apellidos'] = $usuario['apellidos'];
+            $_SESSION['carnet'] = $usuario['carnet'];
+            header('Location: ../html/inicio.php');
+            exit();
+        } else {
+            header('Location: ../html/login.html?error=credenciales');
+            exit();
+        }
     } else {
-        echo "<script>
-            alert('⚠️ Contraseña incorrecta');
-            window.location.href='../html/login.html';
-        </script>";
+        header('Location: ../html/login.html?error=campos');
+        exit();
     }
 } else {
-    echo "<script>
-        alert('⚠️ Estudiante no encontrado');
-        window.location.href='../html/login.html';
-    </script>";
+    header('Location: ../html/login.html');
+    exit();
 }
-
-$stmt->close();
-$conn->close();
 ?>

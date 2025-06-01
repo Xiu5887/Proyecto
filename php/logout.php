@@ -7,7 +7,7 @@ $_SESSION = array();
 // Destruir la sesión
 session_destroy();
 
-// Redirigir al login
-header("Location: ../html/login.html");
+// Redirigir al lobby
+header("Location: ../html/lobby.html");
 exit;
 ?>
