@@ -1,0 +1,162 @@
+<?php
+require_once __DIR__ . '/../../conexion.php';
+session_start();
+if (!isset($_SESSION['id'])) {
+    header('Location: ../../index.php');
+    exit();
+}
+
+// Obtener todas las materias del pensum, ordenadas por semestre
+$sql_materias = "SELECT semestre, id, nombre, contenido_url FROM materias ORDER BY semestre, nombre";
+$stmt_materias = $conn->query($sql_materias);
+$all_materias = $stmt_materias->fetchAll(PDO::FETCH_GROUP | PDO::FETCH_ASSOC);
+?>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pensum de Estudio | MiPortafolioDigital</title>
+    <link rel="stylesheet" href="/1/asset/css/estilo.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .pensum-container .card {
+            background: #fff;
+            border-radius: 1rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            padding: 1.5rem;
+            margin-bottom: 20px;
+        }
+        .pensum-container h3 {
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            color: #333;
+        }
+        .materia-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #e9ecef;
+            transition: box-shadow 0.2s, transform 0.2s;
+        }
+        .materia-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        .materia-nombre {
+            color: #343a40;
+            font-weight: 500;
+        }
+        .download-link {
+            color: #4a6cf7;
+            text-decoration: none;
+            font-size: 1.2rem;
+            transition: color 0.3s;
+        }
+        .download-link:hover {
+            color: #2563eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-top">
+                <div class="brand">
+                    <div class="logo-icon">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <span class="brand-name">MiPortafolio</span>
+                </div>
+                <nav class="nav-menu">
+                    <a href="inicio.php" class="nav-link">
+                        <i class="fas fa-home"></i>
+                        <span>Inicio</span>
+                    </a>
+                    <a href="perfil.php" class="nav-link">
+                        <i class="fas fa-user"></i>
+                        <span>Perfil</span>
+                    </a>
+                    <a href="materias.php" class="nav-link">
+                        <i class="fas fa-book"></i>
+                        <span>Materias</span>
+                    </a>
+                    <a href="notas.php" class="nav-link">
+                        <i class="fas fa-chart-bar"></i>
+                        <span>Notas</span>
+                    </a>
+                    <a href="horario.php" class="nav-link">
+                        <i class="fas fa-calendar"></i>
+                        <span>Horario</span>
+                    </a>
+                    <a href="pensum.php" class="nav-link active">
+                        <i class="fas fa-graduation-cap"></i>
+                        <span>Pensum de Estudio</span>
+                    </a>
+                    <a href="biblioteca.php" class="nav-link">
+                        <i class="fas fa-book-reader"></i>
+                        <span>Biblioteca</span>
+                    </a>
+                </nav>
+            </div>
+            <div class="sidebar-bottom">
+                <div class="user-info">
+                    <div class="user-avatar">
+                        <i class="fas fa-user-circle"></i>
+                    </div>
+                    <div class="user-info">
+                        <span class="user-name"><?php echo htmlspecialchars($_SESSION['nombres'] . ' ' . $_SESSION['apellidos']); ?></span>
+                        <span class="user-role">Carnet: <?php echo htmlspecialchars($_SESSION['carnet']); ?></span>
+                    </div>
+                </div>
+                <a href="../php/logout.php" class="logout-btn" style="display: flex; align-items: center; gap: 8px; margin-top: 1.5rem; padding: 8px 16px; border-radius: 6px; font-size: 0.95rem; color: #888; background: #f7f7f7; border: none; transition: background 0.2s, color 0.2s; text-decoration: none; box-shadow: none; opacity: 0.85;">
+                    <i class="fas fa-sign-out-alt" style="font-size: 1.1em;"></i>
+                    <span style="font-weight: 500;">Cerrar Sesión</span>
+                </a>
+            </div>
+        </aside>
+        <main class="main-content">
+            <header class="content-header">
+                <h1>Pensum de Estudio</h1>
+            </header>
+            <div class="content-body">
+                <section class="pensum-container">
+                    <?php if (empty($all_materias)): ?>
+                        <div class="profile-card" style="background: #fff; border-radius: 1rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05); padding: 2rem; max-width: 600px; margin: 2rem auto; text-align:center;">
+                            <i class="fas fa-graduation-cap" style="font-size: 3rem; color: #2563eb; margin-bottom: 1rem;"></i>
+                            <h2>No hay materias en el pensum para mostrar.</h2>
+                            <p style="color: #64748b;">Aún no se han cargado materias en el sistema.</p>
+                        </div>
+                    <?php else: ?>
+                        <?php foreach ($all_materias as $semestre => $materias_list): ?>
+                            <div class="card">
+                                <h3>Semestre <?php echo $semestre; ?></h3>
+                                <?php foreach ($materias_list as $materia): ?>
+                                    <?php if (isset($materia['id'], $materia['nombre'])): ?>
+                                    <div class="materia-item">
+                                        <span class="materia-nombre"><?php echo htmlspecialchars($materia['nombre']); ?></span>
+                                        <?php if (!empty($materia['contenido_url'])): ?>
+                                            <a href="../controlador/descargar.php?materia_id=<?php echo $materia['id']; ?>" class="download-link" title="Descargar contenido programático">
+                                                <i class="fas fa-download"></i>
+                                            </a>
+                                        <?php endif; ?>
+                                    </div>
+                                    <?php endif; ?>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </section>
+            </div>
+        </main>
+    </div>
+    <script src="../javascript/animaciones.js"></script>
+</body>
+</html>
